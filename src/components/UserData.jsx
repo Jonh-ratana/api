@@ -746,191 +746,54 @@
 // };
 
 // export default UserData;
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const UserData = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [newUser, setNewUser] = useState({ name: '', password: '', image: null });
-    const [editUser, setEditUser] = useState({ id: null, name: '', password: '', image: null });
+function UserData() {
+  // State to store the user data from the API
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    const API_URL = 'https://ratana007.pythonanywhere.com/api/data';
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const response = await axios.get(API_URL);
-            setUsers(response.data);
-            setLoading(false);
-        } catch (err) {
-            setError('Error fetching data');
-            setLoading(false);
-        }
+  // Fetch data from Flask API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // URL to your Flask API endpoint
+        const response = await axios.get('https://ratana007.pythonanywhere.com/api/data');
+        setData(response.data);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load data');
+        setLoading(false);
+      }
     };
 
-    const handleAddUser = async () => {
-        const formData = new FormData();
-        formData.append('name', newUser.name);
-        formData.append('password', newUser.password);
-        if (newUser.image) {
-            formData.append('image', newUser.image);
-        }
+    fetchData();
+  }, []);  // Empty dependency array ensures this runs only once when the component mounts
 
-        try {
-            await axios.post(API_URL, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            fetchUsers(); // Refresh user list after adding a new user
-            setNewUser({ name: '', password: '', image: null }); // Clear input fields
-        } catch (err) {
-            setError('Error adding user');
-        }
-    };
+  if (loading) {
+    return <div>Loading...</div>;  // Show loading state
+  }
 
-    const handleUpdateUser = async () => {
-        const formData = new FormData();
-        formData.append('name', editUser.name);
-        formData.append('password', editUser.password);
-        if (editUser.image) {
-            formData.append('image', editUser.image);
-        }
+  if (error) {
+    return <div>{error}</div>;  // Show error message if the data fetch fails
+  }
 
-        try {
-            await axios.put(`${API_URL}/${editUser.id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-            fetchUsers(); // Refresh user list after updating the user
-            setEditUser({ id: null, name: '', password: '', image: null }); // Clear edit form
-        } catch (err) {
-            setError('Error updating user');
-        }
-    };
-
-    const handleDeleteUser = async (id) => {
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            fetchUsers(); // Refresh user list after deletion
-        } catch (err) {
-            setError('Error deleting user');
-        }
-    };
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setNewUser({ ...newUser, image: file });
-        }
-    };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    if (error) {
-        return <div>{error}</div>;
-    }
-
-    return (
-        <div>
-            <h1 className="text-center">User Data</h1>
-
-            <div className="container">
-                {/* Add User Form */}
-                <div className="row mb-3">
-                    <div className="col">
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Name"
-                            value={newUser.name}
-                            onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                        />
-                    </div>
-                    <div className="col">
-                        <input
-                            type="password"
-                            className="form-control"
-                            placeholder="Password"
-                            value={newUser.password}
-                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                        />
-                    </div>
-                    <div className="col">
-                        <input
-                            type="file"
-                            className="form-control"
-                            onChange={handleImageChange}
-                        />
-                    </div>
-                    <div className="col">
-                        <button className="btn btn-primary" onClick={handleAddUser}>Add User</button>
-                    </div>
-                </div>
-
-                {/* Edit User Form */}
-                <div className="row mb-3">
-                    <div className="col">
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Name"
-                            value={editUser.name}
-                            onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
-                        />
-                    </div>
-                    <div className="col">
-                        <input
-                            type="password"
-                            className="form-control"
-                            placeholder="Password"
-                            value={editUser.password}
-                            onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
-                        />
-                    </div>
-                    <div className="col">
-                        <input
-                            type="file"
-                            className="form-control"
-                            onChange={(e) => setEditUser({ ...editUser, image: e.target.files[0] })}
-                        />
-                    </div>
-                    <div className="col">
-                        <button className="btn btn-success" onClick={handleUpdateUser}>Update User</button>
-                    </div>
-                </div>
-
-                {/* Display Users */}
-                <div className="row">
-                    {users.map((user) => (
-                        <div key={user.id} className="col-md-4 mb-3">
-                            <div className="card">
-                                <img
-                                    className="card-img-top"
-                                    src={user.image || 'https://via.placeholder.com/150'}
-                                    alt={user.name}
-                                />
-                                <div className="card-body">
-                                    <h5 className="card-title">{user.name}</h5>
-                                    <p className="card-text">Password: {user.password}</p>
-                                    <button className="btn btn-danger" onClick={() => handleDeleteUser(user.id)}>Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
+  return (
+    <div>
+      <h1>Users</h1>
+      <ul>
+        {data.map((user) => (
+          <li key={user.id}>
+            <h3>{user.name}</h3>
+            <p>Password: {user.password}</p>
+            {user.image && <img src={user.image} alt={user.name} width="100" />}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default UserData;
